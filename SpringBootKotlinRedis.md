@@ -4,7 +4,7 @@ So a few people have spoke about mini hack events and team L&D sessions. We had 
 
 ## What?
 
-So what are we going to be doing? So the majority of us have been using Kotlin and Spring Boot on the Nexus for Orwell project so the first part of this project is building on that knowledge. We are going to be building a simple RESTful API that accepts a json payload and returns an acknowledgement. In future sessions we're going to Dockerise all the things, run them on Kubernetes, getting some ElasticSearch on the go and who knows where else.
+So what are we going to be doing? So the majority of us have been using Kotlin and Spring Boot on the Nexus for Orwell project so the first part of this project is building on that knowledge. We are going to be building a simple Spring Boot application which contains a RESTful API and associated operations. In future sessions we're going to Dockerise all the things, run them on Kubernetes, getting some ElasticSearch on the go and who knows where else.
 
 ```mermaid
 sequenceDiagram
@@ -61,6 +61,26 @@ SB will automatically configure and setup an application based on the dependenci
  - Its bloody opinionated!
  
 Its has a chosen way of doing things by default. Anyone who has worked with Angular will know how this feels! But in this case...its actually a good thing! Sometimes we're literally drowning in choices and are to spoilt for choice and this is even worse when you're new to this stuff! SB removes this burden so that you can get up and running as quickly as possible which means more time writing code that solves a business problem!
+
+## A bit on Annotations
+
+In most typical applications, we have distinct layers like data access, presentation, service, business, etc.
+
+And, in each layer, we have various beans. Simply put, to detect them automatically, **Spring uses classpath scanning annotations**.
+
+Then, it registers each bean in the _ApplicationContext_.
+
+Here’s a quick overview of a few of these annotations:
+
+-   _@Component_  is a generic stereotype for any Spring-managed component
+-   _@Service_ annotates classes at the service layer
+-   _@Repository_  annotates classes at the persistence layer, which will act as a database repository
+
+We can use @Component across the application to mark the beans as Spring’s managed components**.
+
+@Repository_’s job is to catch persistence specific exceptions and rethrow them as one of Spring’s unified unchecked exception.
+
+We mark beans with @Service to indicate that it’s holding the business logic. So there’s no any other specialty except using it in the service layer.
 
 ## Basic Application Structure
 
@@ -219,6 +239,34 @@ And hit send hopefully we should see our data returned as a JSON response :)
 
 I'm a big fan of NoSQL databases...don't tell John ;)
 
-I'm also a big fan of caching...thats for another session.
+I'm also a big fan of caching...but thats for another session.
 
 So in our little scenario we want to dump our JSON in Redis as our service is going to be called a lot and round DB trips could hinder performance.
+
+We need a way to get the JSON we post into our API into Redis and then we also need another function handler to get he data out of Redis.
+
+This is where we need a `Repository`.
+
+Below is an example...
+
+```kotlin
+@Repository  
+interface ActionRepository : CrudRepository<Action, String>
+```
+
+We use the `@Repository` annotation to indicate that the class defines a data repository.
+
+We then create an interface, give it a name, and in this case implement the `CrudRespository` interface.
+
+`CrudRepository` extends Spring data `Repository` interface.
+
+`CrudRepository` provides generic CRUD operations on a repository for a specific type. 
+
+It has generic methods for CRUD operations. To use `CrudRepository` we have to create our interface and extend `CrudRepository`. We need not to implement our interface, its implementation will be created automatically at runtime. Find some of `CrudRepository` methods.  
+  
+`<S extends T> S save(S entity)`: Saves and updates the current entity and returns that entity.  
+`Optional<T> findById(ID primaryKey)`: Returns the entity for the given id.  
+`Iterable<T> findAll()`: Returns all entities.  
+`long count()`: Returns the count.  
+`void delete(T entity)`: Deletes the given entity.  
+`boolean existsById(ID primaryKey)`: Checks if the entity for the given id exists or not.
