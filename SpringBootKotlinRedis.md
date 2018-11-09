@@ -190,7 +190,7 @@ When we hit our API with some JSON we want it to end up in Redis. We have to bui
 ```kotlin
 @PostMapping("/actions")  
 fun createNewAction(@RequestBody actions: Array<Action>) {  
-    actionRepository.saveAll(actions.toMutableList())  
+    return actionRepository.saveAll(actions.toMutableList())  
 }
 ``` 
 First of all we have an annotation...`@PostMapping("/actions")  `
@@ -205,8 +205,8 @@ So in our case we are expecting a JSON payload containing an array of actions. I
 
 ```kotlin
 @PostMapping("/actions")  
-fun createNewAction(@RequestBody actions: List<Action>): List<Action> {  
-    return actions  
+fun createNewAction(@RequestBody actions: List<Action>): MutableIterable<Action> {  
+     return actionRepository.saveAll(actions.toMutableList())  
 }
 ```
 
@@ -262,7 +262,7 @@ We then create an interface, give it a name, and in this case implement the `Cru
 
 `CrudRepository` provides generic CRUD operations on a repository for a specific type. 
 
-It has generic methods for CRUD operations. To use `CrudRepository` we have to create our interface and extend `CrudRepository`. We need not to implement our interface, its implementation will be created automatically at runtime. Find some of `CrudRepository` methods.  
+It has generic methods for CRUD operations. To use `CrudRepository` we have to create our interface and extend `CrudRepository`. We need not to implement our interface, its implementation will be created automatically at runtime. Here are some of the `CrudRepository` methods.  
   
 `<S extends T> S save(S entity)`: Saves and updates the current entity and returns that entity.  
 `Optional<T> findById(ID primaryKey)`: Returns the entity for the given id.  
@@ -270,3 +270,19 @@ It has generic methods for CRUD operations. To use `CrudRepository` we have to c
 `long count()`: Returns the count.  
 `void delete(T entity)`: Deletes the given entity.  
 `boolean existsById(ID primaryKey)`: Checks if the entity for the given id exists or not.
+
+So going back to the code...
+
+```kotlin
+@PostMapping("/actions")   
+fun createNewAction(@RequestBody actions: List<Action>): MutableIterable<Action> {  
+     return actionRepository.saveAll(actions.toMutableList())  
+}
+```
+After writing this we can poke some more messages into our API. We should get the same response but now the data is in Redis.
+
+We can prove this by running:
+
+`hgetall Action:24`
+
+`hgetall Action:24`
